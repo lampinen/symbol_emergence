@@ -1,6 +1,8 @@
 ---
 title: "cyclic group rep analysis"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 ```{r}
@@ -13,16 +15,18 @@ library(tsne)
 ```
 
 ```{r}
-group_order = 7
-nhidden_shared =  group_order
+group_order = 6
+nhidden_shared =  group_order#*group_order
 nhidden_separate = group_order
+nruns = 200
 #run = 8
 ```
 
 
 ```{r}
+num_runs_used = 0
 reps = data.frame()
-for (run in 0:99) {
+for (run in 0:nruns) {
   if (!file.exists(sprintf('results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_a_reps.csv',group_order,nhidden_shared,nhidden_separate,run))) 
   {
     next
@@ -39,6 +43,7 @@ for (run in 0:99) {
   } else {
     reps = cbind(reps,a_reps,b_reps)
   }
+  num_runs_used = num_runs_used + 1
 }
 ```
 
@@ -78,7 +83,7 @@ rep_simils = reps %>%
   select(-rep_name) %>%
   spread(var,value) %>%
   group_by(run) %>%
-  do(data.frame(similarities=unlist(as.list(simil(data.frame(.$V1a,.$V2a,.$V3a,.$V4a,.$V5a,.$V6a,.$V7a,.$V1b,.$V2b,.$V3b,.$V4b,.$V5b,.$V6b,.$V7b)))),indices=1:21)) %>% #uhhh
+  do(data.frame(similarities=unlist(as.list(simil(data.frame(.$V1a,.$V2a,.$V3a,.$V4a,.$V5a,.$V6a,.$V1b,.$V2b,.$V3b,.$V4b,.$V5b,.$V6b)))),indices=1:15)) %>% #uhhh #.$V7a,.$V7b, indices=1:21
   ungroup() %>%
   spread(indices,similarities)
 
@@ -86,7 +91,7 @@ rep_simils = reps %>%
 
 
 ```{r}
-nclusters = 2
+nclusters = 5
 cluster_fit = kmeans(rep_simils[,2:16],nclusters)
 cluster_fit
 
@@ -104,7 +109,7 @@ clustered_reps = reps %>%
   select(-run)
 ```
 
-```{r}
+```{r,warning=FALSE}
 for (cl in 1:nclusters) {
   rep_PCs = prcomp(clustered_reps %>% filter(cluster == cl) %>% spread(rep_name,value) %>% select(-cluster,-elem))
   PCed_reps = data.frame(rep_PCs$x)
@@ -114,6 +119,7 @@ for (cl in 1:nclusters) {
     geom_point(size=5) +
     theme_bw() +
     ggtitle(sprintf('cluster %i',cl)))
+  ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
 }
 ```
 

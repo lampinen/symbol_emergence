@@ -5,7 +5,7 @@ import os
 
 ######Parameters###################
 #general
-group_order = 6
+group_order = 7
 
 #learning
 init_eta = 0.0005
@@ -14,7 +14,7 @@ eta_decay_epoch = 10
 nepochs = 100000
 early_termination_loss = 0.005
 nhidden_separate = group_order
-nhidden_shared = group_order
+nhidden_shared = group_order*group_order
 
 num_runs = 100
 #rseed = 2  #reproducibility
