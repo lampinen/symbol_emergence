@@ -15,7 +15,7 @@ library(tsne)
 ```
 
 ```{r}
-group_order = 6
+group_order = 14
 nhidden_shared =  group_order#*group_order
 nhidden_separate = group_order
 nruns = 200
@@ -79,7 +79,7 @@ ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element)) +
 rep_simils = reps %>% 
   mutate(elem = factor(0:(group_order-1))) %>% 
   gather(rep_name,value,-elem) %>%
-  mutate(run = as.integer(str_extract(rep_name,'[0123456789]+$')),var = factor(str_extract(rep_name,'^V[1234567][ab]'))) %>%
+  mutate(run = as.integer(str_extract(rep_name,'[0123456789]+$')),var = factor(str_extract(rep_name,'^V[0123456789]+[ab]'))) %>%
   select(-rep_name) %>%
   spread(var,value) %>%
   group_by(run) %>%
@@ -91,7 +91,7 @@ rep_simils = reps %>%
 
 
 ```{r}
-nclusters = 5
+nclusters = 6
 cluster_fit = kmeans(rep_simils[,2:16],nclusters)
 cluster_fit
 
