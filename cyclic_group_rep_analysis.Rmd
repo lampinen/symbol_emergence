@@ -83,7 +83,7 @@ rep_simils = reps %>%
   select(-rep_name) %>%
   spread(var,value) %>%
   group_by(run) %>%
-  do(data.frame(similarities=unlist(as.list(simil(data.frame(.$V1a,.$V2a,.$V3a,.$V4a,.$V5a,.$V6a,.$V1b,.$V2b,.$V3b,.$V4b,.$V5b,.$V6b)))),indices=1:15)) %>% #uhhh #.$V7a,.$V7b, indices=1:21
+  do(data.frame(similarities=unlist(as.list(simil(.[,(1:group_order)+2]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh #.$V7a,.$V7b, indices=1:21
   ungroup() %>%
   spread(indices,similarities)
 
