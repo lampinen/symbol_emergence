@@ -5,16 +5,16 @@ import os
 
 ######Parameters###################
 #general
-group_order = 7
+group_order = 6
 
 #learning
-init_eta = 0.0005
+init_eta = 0.01
 eta_decay = 1.0 #multiplicative per eta_decay_epoch epochs
 eta_decay_epoch = 10
 nepochs = 100000
 early_termination_loss = 0.005
 nhidden_separate = group_order
-nhidden_shared = group_order*group_order
+nhidden_shared = group_order#*group_order
 
 num_runs = 100
 #rseed = 2  #reproducibility
@@ -42,7 +42,7 @@ b_data = numpy.array([b for (a,b) in raw_x_data])
 
 for rseed in xrange(num_runs):
     print "run %i" %rseed
-    filename_prefix = "results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_" %(group_order,nhidden_shared,nhidden_separate,rseed)
+    filename_prefix = "results/cyclic_sigmoid/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_" %(group_order,nhidden_shared,nhidden_separate,rseed)
 #    if os.path.exists(filename_prefix+"final_a_reps.csv"):
 #	print "skipping %i" %rseed
 #	continue
@@ -64,10 +64,10 @@ for rseed in xrange(num_runs):
     W3 = tf.Variable(tf.random_normal([nhidden_shared,group_order],0.,1/numpy.sqrt(group_order)))
     b3 = tf.Variable(tf.zeros([group_order,]))
 
-    a_rep = tf.nn.relu(tf.matmul(a_ph,W1a)+b1a) 
-    b_rep = tf.nn.relu(tf.matmul(b_ph,W1b)+b1b) 
+    a_rep = tf.nn.sigmoid(tf.matmul(a_ph,W1a)+b1a) 
+    b_rep = tf.nn.sigmoid(tf.matmul(b_ph,W1b)+b1b) 
 
-    middle_rep = tf.nn.relu(tf.matmul(tf.concat([a_rep,b_rep],1),W2)+b2)
+    middle_rep = tf.nn.sigmoid(tf.matmul(tf.concat([a_rep,b_rep],1),W2)+b2)
     pre_output = tf.matmul(middle_rep,W3)+b3
     output = tf.nn.softmax(pre_output)
 
