@@ -5,18 +5,19 @@ import os
 
 ######Parameters###################
 #general
-group_order = 7
+group_order = 6
 
 #learning
-init_eta = 0.0005
-eta_decay = 1.0 #multiplicative per eta_decay_epoch epochs
-eta_decay_epoch = 10
-nepochs = 100000
+init_eta = 0.0001
+later_eta = 0.0005
+nepochs = 200000
+n_initial_epochs = 5000
 early_termination_loss = 0.005
 nhidden_separate = group_order
-nhidden_shared = group_order*group_order
+nhidden_shared = group_order#*group_order
+curriculum_type = "idinv"
 
-num_runs = 100
+num_runs = 200
 #rseed = 2  #reproducibility
 ###################################
 
@@ -40,9 +41,16 @@ y_data = numpy.array([combine(x[0],x[1]) for x in raw_x_data])
 a_data = numpy.array([a for (a,b) in raw_x_data])
 b_data = numpy.array([b for (a,b) in raw_x_data])
 
+identity_x_data = [(a,b) for (a,b) in raw_x_data if (numpy.array_equal(a,identity) or numpy.array_equal(b, identity))]   
+inverse_x_data = [(a,b) for (a,b) in raw_x_data if numpy.array_equal(combine(a,b),identity)]
+initial_x_data = numpy.concatenate([inverse_x_data]*2+[identity_x_data])
+initial_y_data = numpy.array([combine(x[0],x[1]) for x in initial_x_data]) 
+initial_a_data = numpy.array([a for (a,b) in initial_x_data])
+initial_b_data = numpy.array([b for (a,b) in initial_x_data])
+
 for rseed in xrange(num_runs):
     print "run %i" %rseed
-    filename_prefix = "results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_" %(group_order,nhidden_shared,nhidden_separate,rseed)
+    filename_prefix = "results/cyclic_curriculum/curr_%s_order_%i_nhidden-shared_%i-separate_%i_rseed_%i_" %(curriculum_type,group_order,nhidden_shared,nhidden_separate,rseed)
 #    if os.path.exists(filename_prefix+"final_a_reps.csv"):
 #	print "skipping %i" %rseed
 #	continue
@@ -53,7 +61,6 @@ for rseed in xrange(num_runs):
     a_ph = tf.placeholder(tf.float32, shape=[None,group_order])
     b_ph = tf.placeholder(tf.float32, shape=[None,group_order])
     target_ph =  tf.placeholder(tf.float32, shape=[None,group_order])
-
 
     W1a = tf.Variable(tf.random_normal([group_order,nhidden_separate],0.,1/numpy.sqrt(nhidden_separate)))
     b1a = tf.Variable(tf.zeros([nhidden_separate,]))
@@ -104,14 +111,13 @@ for rseed in xrange(num_runs):
 	for example_i in training_order:
 	    sess.run(train,feed_dict={eta_ph: curr_eta,a_ph: a_data[example_i].reshape([1,group_order]),b_ph: b_data[example_i].reshape([1,group_order]),target_ph: y_data[example_i].reshape([1,group_order])})
 
-    def batch_train_with_standard_loss():
+    def batch_train_with_standard_loss(y_data=y_data,a_data=a_data,b_data=b_data):
 	sess.run(train,feed_dict={eta_ph: curr_eta,a_ph: a_data,b_ph: b_data,target_ph: y_data})
 
     print "Initial loss: %f" %(test_accuracy())
 
     #loaded_pre_outputs = numpy.loadtxt(pre_output_filename_to_load,delimiter=',')
 
-    curr_eta = init_eta
     rep_track = []
     filename = filename_prefix + "rep_tracks.csv"
     #if os.path.exists(filename):
@@ -120,15 +126,18 @@ for rseed in xrange(num_runs):
     save_activations(b_rep,filename_prefix+"initial_b_reps.csv")
 #    fout = open(filename,'ab')
     for epoch in xrange(nepochs):
-        batch_train_with_standard_loss()
+	if epoch < n_initial_epochs:
+	    curr_eta = init_eta 
+	    batch_train_with_standard_loss(y_data=initial_y_data,a_data=initial_a_data,b_data=initial_b_data)
+	else:
+	    curr_eta = later_eta 
+	    batch_train_with_standard_loss()
 	if epoch % 1000 == 0:
 	    curr_loss = test_accuracy()
 	    print "epoch: %i, loss: %f" %(epoch, curr_loss)	
 	    if curr_loss < early_termination_loss:
 		print "Stopping early!"
 		break 
-	if epoch % eta_decay_epoch == 0:
-	    curr_eta *= eta_decay
 	
 
     #print sess.run(output,feed_dict={eta_ph: curr_eta,a_ph: a_data,b_ph: b_data})

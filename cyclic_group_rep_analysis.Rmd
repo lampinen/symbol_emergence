@@ -15,24 +15,25 @@ library(tsne)
 ```
 
 ```{r}
-group_order = 14
+group_order = 6
+curriculum = "idinv"
 nhidden_shared =  group_order#*group_order
 nhidden_separate = group_order
 nruns = 200
-#run = 8
+start_run = 0
 ```
 
 
 ```{r}
 num_runs_used = 0
 reps = data.frame()
-for (run in 0:nruns) {
-  if (!file.exists(sprintf('results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_a_reps.csv',group_order,nhidden_shared,nhidden_separate,run))) 
+for (run in start_run:(start_run+nruns)) {
+  if (!file.exists(sprintf('results/cyclic_curriculum/curr_%s_order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_a_reps.csv',curriculum,group_order,nhidden_shared,nhidden_separate,run))) 
   {
     next
   }
-  a_reps = read.csv(sprintf('results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_a_reps.csv',group_order,nhidden_shared,nhidden_separate,run),header=F)
-  b_reps = read.csv(sprintf('results/cyclic/order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_b_reps.csv',group_order,nhidden_shared,nhidden_separate,run),header=F)
+  a_reps = read.csv(sprintf('results/cyclic_curriculum/curr_%s_order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_a_reps.csv',curriculum,group_order,nhidden_shared,nhidden_separate,run),header=F)
+  b_reps = read.csv(sprintf('results/cyclic_curriculum/curr_%s_order_%i_nhidden-shared_%i-separate_%i_rseed_%i_final_b_reps.csv',curriculum,group_order,nhidden_shared,nhidden_separate,run),header=F)
   
   a_reps = a_reps[seq(1,group_order*group_order,group_order),]
   names(a_reps) = lapply(names(a_reps),function(name) paste(name,sprintf('a_run%i',run),sep=''))
@@ -92,7 +93,7 @@ rep_simils = reps %>%
 
 ```{r}
 set.seed(1)
-nclusters = 10
+nclusters = 4
 cluster_fit = kmeans(rep_simils[,2:16],nclusters)
 cluster_fit
 
@@ -120,19 +121,19 @@ for (cl in 1:nclusters) {
     geom_point(size=5) +
     theme_bw() +
     ggtitle(sprintf('cluster %i',cl)))
-  ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
-  
+  ggsave(sprintf('results/cyclic_curriculum_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  next
   print(ggplot(PCed_reps,aes(x=PC3,y=PC2,color=element)) +
     geom_point(size=5) +
     theme_bw() +
     ggtitle(sprintf('cluster %i PCs 23',cl)))
-  ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs23.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  ggsave(sprintf('results/cyclic_curriculum_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs23.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
   
   print(ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
     geom_point(size=5) +
     theme_bw() +
     ggtitle(sprintf('cluster %i PCs 34',cl)))
-  ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs34.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  ggsave(sprintf('results/cyclic_curriculum_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs34.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
 }
 ```
 
