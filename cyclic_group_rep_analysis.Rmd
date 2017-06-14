@@ -83,7 +83,7 @@ rep_simils = reps %>%
   select(-rep_name) %>%
   spread(var,value) %>%
   group_by(run) %>%
-  do(data.frame(similarities=unlist(as.list(simil(.[,(1:group_order)+2]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh #.$V7a,.$V7b, indices=1:21
+  do(data.frame(similarities=unlist(as.list(simil(.[,-c(1,2,3)]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh #.$V7a,.$V7b, indices=1:21
   ungroup() %>%
   spread(indices,similarities)
 
@@ -91,8 +91,8 @@ rep_simils = reps %>%
 
 
 ```{r}
-nclusters = 5
-cluster_fit = kmeans(rep_simils[,2:16],nclusters)
+nclusters = 3
+cluster_fit = kmeans(rep_simils %>% select(-run),nclusters)
 cluster_fit
 
 cluster_lookup = data.frame(rownum=1:nrow(rep_simils),run = rep_simils$run,cluster=cluster_fit$cluster)
