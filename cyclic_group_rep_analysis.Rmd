@@ -15,8 +15,8 @@ library(tsne)
 ```
 
 ```{r}
-group_order = 6
-nhidden_shared =  group_order*group_order
+group_order = 7
+nhidden_shared =  group_order#*group_order
 nhidden_separate = group_order
 nruns = 200
 #run = 8
@@ -83,7 +83,7 @@ rep_simils = reps %>%
   select(-rep_name) %>%
   spread(var,value) %>%
   group_by(run) %>%
-  do(data.frame(similarities=unlist(as.list(simil(.[,(1:group_order)+2]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh #.$V7a,.$V7b, indices=1:21
+  do(data.frame(similarities=unlist(as.list(simil(.[,-c(1,2,3)]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh 
   ungroup() %>%
   spread(indices,similarities)
 
@@ -92,7 +92,7 @@ rep_simils = reps %>%
 
 ```{r}
 set.seed(1)
-nclusters =7
+nclusters =3
 cluster_fit = kmeans(rep_simils %>% select(-run),nclusters)
 cluster_fit
 
