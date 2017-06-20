@@ -13,14 +13,14 @@ init_eta = 0.0005
 nepochs = 200000
 early_termination_loss = 0.01
 
-RNN_seq_length = 4
+RNN_seq_length = 3
 embedding_size = group_order
 nhidden_shared = group_order
 nhidden_recurrent = embedding_size
 
 grad_clip_norm = 5.
 
-num_runs = 1
+num_runs = 200
 #rseed = 2  #reproducibility
 ###################################
 
@@ -81,7 +81,7 @@ for rseed in xrange(num_runs):
     target_ph =  tf.placeholder(tf.float32, shape=[None,RNN_seq_length,group_order])
     mask_ph = tf.placeholder(tf.bool, shape=[None,RNN_seq_length])
 
-    embeddings = tf.Variable(tf.random_uniform([group_order,embedding_size],-1.,1))
+    embeddings = tf.Variable(tf.random_uniform([group_order,embedding_size],-1./embedding_size,1/embedding_size))
 
     embedded_inputs = tf.nn.embedding_lookup(embeddings,input_ph)
     
