@@ -1,0 +1,126 @@
+---
+title: "recurrent cyclic group rep analysis"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r}
+library(ggplot2)
+library(proxy)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tsne)
+```
+
+```{r}
+group_order = 6
+seq_length = 3
+nhidden_shared =  group_order#*group_order
+nhidden_recurrent = group_order
+nhidden_embedding = group_order
+nruns = 200
+#run = 8
+```
+
+
+```{r}
+num_runs_used = 0
+reps = data.frame()
+for (run in 0:nruns) {
+  if (!file.exists(sprintf('results/cyclic/order_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_final_reps.csv',group_order,seq_length,nhidden_shared,nhidden_recurrent,nhidden_embedding,run))) 
+  {
+    next
+  }
+  these_reps = read.csv(sprintf('results/cyclic/order_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_final_reps.csv',group_order,seq_length,nhidden_shared,nhidden_recurrent,nhidden_embedding,run),header=F)
+  
+  names(these_reps) = lapply(names(these_reps),function(name) paste(name,sprintf('_run%i',run),sep=''))
+  if (nrow(reps) == 0) {
+    reps = these_reps
+  } else {
+    reps = cbind(reps,these_reps)
+  }
+  num_runs_used = num_runs_used + 1
+}
+```
+
+```{r}
+simil(reps,upper=T)
+image(0:(group_order-1),0:(group_order-1),as.matrix(simil(reps,upper=T)))
+```
+
+
+```{r}
+rep_PCs = prcomp(reps %>% .[, colSums(. != 0) > 0])
+PCed_reps = data.frame(rep_PCs$x)
+PCed_reps$element = factor(0:(group_order-1))
+
+ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element)) +
+  geom_point(size=5) +
+  theme_bw()
+```
+
+# clustering
+
+```{r}
+rep_simils = reps %>% 
+  mutate(elem = factor(0:(group_order-1))) %>% 
+  gather(rep_name,value,-elem) %>%
+  mutate(run = as.integer(str_extract(rep_name,'[0123456789]+$')),var = factor(str_extract(rep_name,'^V[0123456789]+'))) %>%
+  select(-rep_name) %>%
+  spread(var,value) %>%
+  group_by(run) %>%
+  do(data.frame(similarities=unlist(as.list(simil(.[,-c(1,2,3)]))),indices=1:((group_order*(group_order-1))/2))) %>% #uhhh 
+  ungroup() %>%
+  spread(indices,similarities)
+
+```
+
+
+```{r}
+set.seed(1)
+nclusters =4
+cluster_fit = kmeans(rep_simils %>% select(-run),nclusters)
+cluster_fit
+
+cluster_lookup = data.frame(rownum=1:nrow(rep_simils),run = rep_simils$run,cluster=cluster_fit$cluster)
+rownames(cluster_lookup) = cluster_lookup$run
+```
+
+
+```{r}
+clustered_reps = reps %>% 
+  mutate(elem = factor(0:(group_order-1))) %>% 
+  gather(rep_name,value,-elem) %>%
+  mutate(run = str_extract(rep_name,'[0123456789]+$')) %>%
+  mutate(cluster = cluster_lookup[run,'cluster']) %>%
+  select(-run)
+```
+
+```{r,warning=FALSE}
+for (cl in 1:nclusters) {
+  rep_PCs = prcomp(clustered_reps %>% filter(cluster == cl) %>% spread(rep_name,value) %>% select(-cluster,-elem))
+  PCed_reps = data.frame(rep_PCs$x)
+  PCed_reps$element = factor(0:(group_order-1))
+  
+  print(ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element)) +
+    geom_point(size=5) +
+    theme_bw() +
+    ggtitle(sprintf('cluster %i',cl)))
+  #ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  
+  #print(ggplot(PCed_reps,aes(x=PC3,y=PC2,color=element)) +
+  #  geom_point(size=5) +
+  #  theme_bw() +
+  #  ggtitle(sprintf('cluster %i PCs 23',cl)))
+  #ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs23.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  
+  #print(ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
+  #  geom_point(size=5) +
+  #  theme_bw() +
+  #  ggtitle(sprintf('cluster %i PCs 34',cl)))
+  #ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs34.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+}
+```
+
