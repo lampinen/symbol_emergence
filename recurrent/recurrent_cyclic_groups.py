@@ -10,10 +10,11 @@ group_order = 6
 
 #learning
 init_eta = 0.0005
-nepochs = 200000
-early_termination_loss = 0.01
+nepochs = 500000
+early_termination_loss = 0.005
+curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
 
-RNN_seq_length = 3
+RNN_seq_length = 4
 embedding_size = group_order
 nhidden_shared = group_order
 nhidden_recurrent = embedding_size
@@ -81,7 +82,7 @@ for rseed in xrange(num_runs):
     target_ph =  tf.placeholder(tf.float32, shape=[None,RNN_seq_length,group_order])
     mask_ph = tf.placeholder(tf.bool, shape=[None,RNN_seq_length])
 
-    embeddings = tf.Variable(tf.random_uniform([group_order,embedding_size],-1./embedding_size,1/embedding_size))
+    embeddings = tf.Variable(tf.random_uniform([group_order,embedding_size],-0.1/embedding_size,0.1/embedding_size))
 
     embedded_inputs = tf.nn.embedding_lookup(embeddings,input_ph)
     
@@ -150,7 +151,6 @@ for rseed in xrange(num_runs):
     curr_eta = init_eta
     filename = filename_prefix + "rep_tracks.csv"
     for epoch in xrange(nepochs):
-	#a little curriculum
 	batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
 
 	if epoch % 1000 == 0:
