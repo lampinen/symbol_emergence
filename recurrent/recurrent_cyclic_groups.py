@@ -1,6 +1,5 @@
 import tensorflow as tf
 import numpy
-import matplotlib.pyplot as plt
 import os
 from itertools import combinations_with_replacement
 
@@ -12,7 +11,9 @@ group_order = 6
 init_eta = 0.0005
 nepochs = 500000
 early_termination_loss = 0.005
+
 curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
+curriculum_switch_epoch = 200000
 
 RNN_seq_length = 4
 embedding_size = group_order
@@ -151,7 +152,10 @@ for rseed in xrange(num_runs):
     curr_eta = init_eta
     filename = filename_prefix + "rep_tracks.csv"
     for epoch in xrange(nepochs):
-	batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
+	if epoch < curriculum_switch_epoch:
+	    batch_train_with_standard_loss(x_data=x_data[:curriculum_stage_0],y_data=y_data[:curriculum_stage_0],masks=masks[:curriculum_stage_0])
+	else:
+	    batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
 
 	if epoch % 1000 == 0:
 	    curr_loss = test_accuracy(x_data=x_data,y_data=y_data,masks=masks)
