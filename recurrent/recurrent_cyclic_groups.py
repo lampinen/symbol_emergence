@@ -169,5 +169,5 @@ for rseed in xrange(num_runs):
     final_loss,final_max_dev = test_accuracy()
     print "Final loss: %f, maximum deviation: %f" %(final_loss,final_max_dev)
 
-    if final_loss < 0.05 and max_dev < 0.2:
+    if final_loss < 0.05 and final_max_dev < 0.2:
 	save_weights(embeddings,filename_prefix+"final_reps.csv")
