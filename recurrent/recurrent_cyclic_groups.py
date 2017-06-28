@@ -5,15 +5,17 @@ from itertools import combinations_with_replacement
 
 ######Parameters###################
 #general
-group_order = 6
+group_order = 14
 
 #learning
 init_eta = 0.0005
 nepochs = 500000
-early_termination_loss = 0.005
+early_termination_loss = 0.001
+early_termination_max_dev = 0.2
+
 
 curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
-curriculum_switch_epoch = 200000
+curriculum_switch_epoch = 30000
 
 RNN_seq_length = 4
 embedding_size = group_order
@@ -106,7 +108,7 @@ for rseed in xrange(num_runs):
     loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits=tf.boolean_mask(pre_outputs,mask_ph),labels=tf.boolean_mask(target_ph,mask_ph)))	
 
     output = tf.nn.softmax(pre_outputs)
-    max_deviation = tf.reduce_max(tf.boolean_mask(output,mask_ph)-tf.boolean_mask(target_ph,mask_ph))
+    max_deviation = tf.reduce_max(tf.abs(tf.boolean_mask(output,mask_ph)-tf.boolean_mask(target_ph,mask_ph)))
 
     eta_ph = tf.placeholder(tf.float32)
     optimizer = tf.train.GradientDescentOptimizer(eta_ph)
@@ -126,9 +128,9 @@ for rseed in xrange(num_runs):
     sess.run(init)
 
     def test_accuracy(x_data=x_data,y_data=y_data,masks=masks):
-	curr_loss = sess.run(loss,feed_dict={input_ph: x_data,target_ph: y_data,mask_ph: masks})
+	curr_loss,curr_max_dev = sess.run([loss,max_deviation],feed_dict={input_ph: x_data,target_ph: y_data,mask_ph: masks})
 	curr_loss /= len(x_data) 
-	return curr_loss
+	return curr_loss,curr_max_dev
 
 #    def save_activations(tf_object,filename,remove_old=True):
 #	if remove_old and os.path.exists(filename):
@@ -147,26 +149,25 @@ for rseed in xrange(num_runs):
     def batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks):
 	sess.run(train,feed_dict={eta_ph: curr_eta,input_ph: x_data,target_ph: y_data,mask_ph: masks})
 
-    print "Initial loss: %f" %(test_accuracy())
+    print "Initial loss: %f, initial max deviation: %f" %(test_accuracy())
 
     curr_eta = init_eta
     filename = filename_prefix + "rep_tracks.csv"
     for epoch in xrange(nepochs):
-	if epoch < curriculum_switch_epoch:
+	if epoch < curriculum_switch_epoch and epoch % 10 != 0:
 	    batch_train_with_standard_loss(x_data=x_data[:curriculum_stage_0],y_data=y_data[:curriculum_stage_0],masks=masks[:curriculum_stage_0])
 	else:
 	    batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
 
 	if epoch % 1000 == 0:
-	    curr_loss = test_accuracy(x_data=x_data,y_data=y_data,masks=masks)
-	    print "epoch: %i, loss: %f" %(epoch, curr_loss)	
-	    if curr_loss < early_termination_loss:
+	    curr_loss,curr_max_dev = test_accuracy(x_data=x_data,y_data=y_data,masks=masks)
+	    print "epoch: %i, loss: %f, max_dev: %f" %(epoch, curr_loss, curr_max_dev)	
+	    if curr_loss < early_termination_loss and curr_max_dev < early_termination_max_dev:
 		print "Stopping early!"
 		break 
 
-    max_dev = sess.run(max_deviation,feed_dict={input_ph: x_data,target_ph: y_data,mask_ph: masks})
-    final_loss = test_accuracy()
-    print "Final loss: %f, maximum deviation: %f" %(final_loss,max_dev)
+    final_loss,final_max_dev = test_accuracy()
+    print "Final loss: %f, maximum deviation: %f" %(final_loss,final_max_dev)
 
     if final_loss < 0.05 and max_dev < 0.2:
 	save_weights(embeddings,filename_prefix+"final_reps.csv")
