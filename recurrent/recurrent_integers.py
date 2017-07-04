@@ -9,7 +9,7 @@ max_n = 20
 
 #learning
 init_eta = 0.0005
-nepochs = 100000
+nepochs = 500000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
 
