@@ -9,15 +9,15 @@ group_order = 14
 
 #learning
 init_eta = 0.0005
-nepochs = 500000
+nepochs = 100000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
 
 
-curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
-curriculum_switch_epoch = 30000
+#curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
+#curriculum_switch_epoch = 30000
 
-RNN_seq_length = 4
+RNN_seq_length = 5
 embedding_size = group_order
 nhidden_shared = group_order
 nhidden_recurrent = embedding_size
@@ -153,10 +153,10 @@ for rseed in xrange(num_runs):
     curr_eta = init_eta
     filename = filename_prefix + "rep_tracks.csv"
     for epoch in xrange(nepochs):
-	if epoch < curriculum_switch_epoch and epoch % 10 != 0:
-	    batch_train_with_standard_loss(x_data=x_data[:curriculum_stage_0],y_data=y_data[:curriculum_stage_0],masks=masks[:curriculum_stage_0])
-	else:
-	    batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
+	#if epoch < curriculum_switch_epoch and epoch % 10 != 0:
+	#    batch_train_with_standard_loss(x_data=x_data[:curriculum_stage_0],y_data=y_data[:curriculum_stage_0],masks=masks[:curriculum_stage_0])
+	#else:
+	batch_train_with_standard_loss(x_data=x_data,y_data=y_data,masks=masks)
 
 	if epoch % 1000 == 0:
 	    curr_loss,curr_max_dev = test_accuracy(x_data=x_data,y_data=y_data,masks=masks)
