@@ -101,7 +101,7 @@ for rseed in xrange(num_runs):
 	this_embedded_input = tf.squeeze(tf.slice(embedded_inputs,[0,i,0,],[-1,1,-1]),axis=1)
 	hidden_state = tf.nn.relu(tf.matmul(recurrent_state,Wr2h)+tf.matmul(this_embedded_input,We2h)+bh)
 	recurrent_state = tf.nn.tanh(tf.matmul(hidden_state,Wh2r)+br) 
-	output_logits.append(tf.matmul(recurrent_state,tf.tranpose(embeddings)))
+	output_logits.append(tf.matmul(recurrent_state,tf.transpose(embeddings)))
 
     pre_outputs = tf.stack(output_logits,axis=1)
     loss = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits=tf.boolean_mask(pre_outputs,mask_ph),labels=tf.boolean_mask(target_ph,mask_ph)))	
