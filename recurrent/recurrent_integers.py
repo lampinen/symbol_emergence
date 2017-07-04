@@ -18,8 +18,8 @@ curriculum_stage_0 = max_n+max_n*max_n+max_n*max_n*max_n
 curriculum_switch_epoch = 30000
 
 RNN_seq_length = 4
-embedding_size = 10 
-nhidden_shared = 10
+embedding_size = max_n 
+nhidden_shared = max_n
 nhidden_recurrent = embedding_size
 
 grad_clip_norm = 5.
