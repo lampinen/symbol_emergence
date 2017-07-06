@@ -5,7 +5,7 @@ from itertools import product
 
 ######Parameters###################
 #general
-group_order = 3
+group_order = 14
 
 #learning
 init_eta = 0.0005
