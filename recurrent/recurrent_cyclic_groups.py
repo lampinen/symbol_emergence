@@ -1,11 +1,11 @@
 import tensorflow as tf
 import numpy
 import os
-from itertools import combinations_with_replacement
+from itertools import product 
 
 ######Parameters###################
 #general
-group_order = 14
+group_order = 3
 
 #learning
 init_eta = 0.0005
@@ -63,12 +63,15 @@ raw_x_data = []
 masks = []
 for nelements in xrange(1,RNN_seq_length+1):
     this_mask = [True]*nelements+[False]*(RNN_seq_length-nelements)
-    for c in combinations_with_replacement(elements,nelements):
+    for c in product(elements,repeat=nelements):
 	raw_x_data.append(pad(list(c),RNN_seq_length,empty_element))
 	masks.append(this_mask)
 y_data = numpy.array([combine_list(x) for x in raw_x_data])
 x_data = numpy.array(map(lambda l: map(lambda x: numpy.argmax(x),l),raw_x_data),dtype=numpy.int32)
 masks = numpy.array(masks,dtype=numpy.bool)
+print x_data
+print len(x_data),group_order+group_order**2+group_order**3+group_order**4+group_order**5
+exit()
 
 for rseed in xrange(num_runs):
     print "run %i" %rseed
