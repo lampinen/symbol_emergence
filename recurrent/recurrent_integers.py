@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy
 import os
-from itertools import combinations_with_replacement
+from itertools import product 
 
 ######Parameters###################
 #general
@@ -34,11 +34,11 @@ identity[0] = 1.
 numbers = [numpy.roll(identity,i) for i in xrange(max_n)] 
 empty_element = numpy.zeros(max_n)
 
-def add(a,b): 
+def multiply(a,b): 
     """group operation"""
     i = numpy.argmax(a)
     j = numpy.argmax(b)
-    shift = (i+j)
+    shift = (i*j)
     if shift > max_n:
 	return None
     return numpy.roll(identity,shift) 
@@ -53,7 +53,7 @@ def combine_list(l):
 	if numpy.array_equal(x,empty_element):
 	    outputs.append(outputs[-1])
 	else:
-	    curr = add(curr,x)
+	    curr = multiply(curr,x)
 	    outputs.append(curr)
     return outputs
 
@@ -69,7 +69,7 @@ raw_x_data = []
 masks = []
 for nelements in xrange(1,RNN_seq_length+1):
     this_mask = [True]*nelements+[False]*(RNN_seq_length-nelements)
-    for c in combinations_with_replacement(numbers,nelements):
+    for c in product(numbers,repeat=nelements):
 	raw_x_data.append(pad(list(c),RNN_seq_length,empty_element))
 	masks.append(this_mask)
 y_data = numpy.array([combine_list(x) for x in raw_x_data])
