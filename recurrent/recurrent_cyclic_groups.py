@@ -5,7 +5,7 @@ from itertools import product
 
 ######Parameters###################
 #general
-group_order = 14
+group_order = 14 
 
 #learning
 init_eta = 0.0005
@@ -17,7 +17,7 @@ early_termination_max_dev = 0.2
 #curriculum_stage_0 = group_order+group_order*group_order+group_order*group_order*group_order 
 #curriculum_switch_epoch = 30000
 
-RNN_seq_length = 5
+RNN_seq_length = 4
 embedding_size = group_order
 nhidden_shared = group_order
 nhidden_recurrent = embedding_size
