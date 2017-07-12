@@ -1,0 +1,178 @@
+---
+title: "recurrent integers rep analysis"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r}
+library(ggplot2)
+library(proxy)
+library(dplyr)
+library(tidyr)
+library(stringr)
+#library(tsne)
+
+```
+
+```{r}
+max_n = 20
+seq_length = 4
+nhidden_shared =  max_n
+nhidden_recurrent = max_n
+nhidden_embedding = max_n
+nruns = 200
+```
+
+
+```{r}
+num_runs_used = 0
+reps = data.frame()
+for (run in 0:nruns) {
+  if (!file.exists(sprintf('results/integers/maxn_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_final_reps.csv',max_n,seq_length,nhidden_shared,nhidden_recurrent,nhidden_embedding,run))) 
+  {
+    next
+  }
+  these_reps = read.csv(sprintf('results/integers/maxn_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_final_reps.csv',max_n,seq_length,nhidden_shared,nhidden_recurrent,nhidden_embedding,run),header=F)
+  
+  names(these_reps) = lapply(names(these_reps),function(name) paste(name,sprintf('_run%i',run),sep=''))
+  if (nrow(reps) == 0) {
+    reps = these_reps
+  } else {
+    reps = cbind(reps,these_reps)
+  }
+  num_runs_used = num_runs_used + 1
+}
+```
+
+```{r}
+simil(reps,upper=T)
+image(0:max_n,0:max_n,as.matrix(simil(reps,upper=T)))
+```
+
+
+```{r}
+rep_PCs = prcomp(reps %>% .[, colSums(. != 0) > 0])
+PCed_reps = data.frame(rep_PCs$x)
+PCed_reps$number = factor(0:(max_n))
+
+
+ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element)) +
+  geom_point(size=5) +
+  ggtitle('Overall PCs 12')+
+  theme_bw()
+#ggsave()
+
+ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
+  geom_point(size=5) +
+  ggtitle('Overall PCs 34')+
+  theme_bw()
+#ggsave()
+
+```
+
+# clustering
+
+```{r}
+rep_simils = reps %>% 
+  mutate(elem = factor(0:(max_n))) %>% 
+  gather(rep_name,value,-elem) %>%
+  mutate(run = as.integer(str_extract(rep_name,'[0123456789]+$')),var = factor(str_extract(rep_name,'^V[0123456789]+'))) %>%
+  select(-rep_name) %>%
+  spread(var,value) %>%
+  group_by(run) %>%
+  do(data.frame(similarities=unlist(as.list(simil(.[,-c(1,2,3)]))),indices=1:(((max_n+1)*(max_n))/2))) %>% #uhhh 
+  ungroup() %>%
+  spread(indices,similarities)
+
+```
+
+
+```{r}
+set.seed(1)
+nclusters = 5
+cluster_fit = kmeans(rep_simils %>% select(-run),nclusters)
+#cluster_fit
+cluster_fit$betweenss/cluster_fit$totss
+
+cluster_lookup = data.frame(rownum=1:nrow(rep_simils),run = rep_simils$run,cluster=cluster_fit$cluster)
+rownames(cluster_lookup) = cluster_lookup$run
+```
+
+
+```{r}
+clustered_reps = reps %>% 
+  mutate(elem = factor(0:(max_n))) %>% 
+  gather(rep_name,value,-elem) %>%
+  mutate(run = str_extract(rep_name,'[0123456789]+$')) %>%
+  mutate(cluster = cluster_lookup[run,'cluster']) %>%
+  select(-run)
+```
+
+```{r,warning=FALSE}
+for (cl in 1:nclusters) {
+  rep_PCs = prcomp(clustered_reps %>% filter(cluster == cl) %>% spread(rep_name,value) %>% select(-cluster,-elem))
+  PCed_reps = data.frame(rep_PCs$x)
+  PCed_reps$element = factor(0:(max_n))
+  
+  print(ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element)) +
+    geom_point(size=5) +
+    theme_bw() +
+    ggtitle(sprintf('cluster %i',cl)))
+  #ggsave()
+  
+  #print(ggplot(PCed_reps,aes(x=PC3,y=PC2,color=element)) +
+  #  geom_point(size=5) +
+  #  theme_bw() +
+  #  ggtitle(sprintf('cluster %i PCs 23',cl)))
+  #ggsave()
+  
+  print(ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
+    geom_point(size=5) +
+    theme_bw() +
+    ggtitle(sprintf('cluster %i PCs 34',cl)))
+  #ggsave()
+}
+```
+
+
+### Primes
+
+```{r}
+isprime = function(x) {
+
+  if (x < 2){
+    return(FALSE)
+  }
+  if (x == 2 | x == 3){
+    return(TRUE)
+  }
+  for (i in 2:floor(sqrt(x))) {
+    if (x %% i == 0) {
+      return(FALSE)
+    }
+  }
+  return(TRUE)
+}
+
+```
+
+```{r}
+
+PCed_reps$isprime = unlist(lapply(as.integer(levels(PCed_reps$number)[PCed_reps$number]),isprime))
+
+
+ggplot(PCed_reps,aes(x=PC1,y=PC2,color=element,shape=isprime)) +
+  geom_point(size=5) +
+  ggtitle('Overall PCs 12')+
+  theme_bw()
+#ggsave()
+
+ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element,shape=isprime)) +
+  geom_point(size=5) +
+  ggtitle('Overall PCs 34')+
+  theme_bw()
+#ggsave()
+
+```
+

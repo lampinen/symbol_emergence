@@ -31,7 +31,7 @@ num_runs = 200
 
 identity = numpy.zeros(max_n)
 identity[0] = 1.
-numbers = [numpy.roll(identity,i) for i in xrange(max_n)] 
+numbers = [numpy.roll(identity,i) for i in xrange(max_n+1)] 
 empty_element = numpy.zeros(max_n)
 
 def multiply(a,b): 
