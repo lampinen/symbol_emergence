@@ -23,10 +23,11 @@ grad_clip_norm = 5.
 num_runs = 200
 #rseed = 2  #reproducibility
 ###################################
-identity = numpy.zeros(max_n + 1)
+vocab_size = max_n + 1
+identity = numpy.zeros(vocab_size)
 identity[0] = 1.
-numbers = [numpy.roll(identity,i) for i in range(max_n + 1)] 
-empty_element = numpy.zeros(max_n + 1)
+numbers = [numpy.roll(identity,i) for i in range(vocab_size)] 
+empty_element = numpy.zeros(vocab_size)
 
 task_names = ["add", "subtract", "divide", "multiply"]
 
@@ -160,10 +161,10 @@ for rseed in range(num_runs):
     tf.set_random_seed(rseed)
 
     input_ph = tf.placeholder(tf.int32, shape=[None,RNN_seq_length])
-    target_ph =  tf.placeholder(tf.float32, shape=[None,RNN_seq_length,max_n])
+    target_ph =  tf.placeholder(tf.float32, shape=[None, RNN_seq_length, vocab_size])
     mask_ph = tf.placeholder(tf.bool, shape=[None,RNN_seq_length])
 
-    embeddings = tf.Variable(tf.random_uniform([max_n+1,embedding_size], -0.1/embedding_size, 0.1/embedding_size))
+    embeddings = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -0.1/embedding_size, 0.1/embedding_size))
 
     embedded_inputs = tf.nn.embedding_lookup(embeddings,input_ph)
     
