@@ -12,7 +12,7 @@ init_eta = 0.0005
 nepochs = 500000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
-result_dir = "/mnt/fs2/lampinen/recurrent_integers_results/"
+results_dir = "/mnt/fs2/lampinen/recurrent_integers_results/"
 
 RNN_seq_length = 4
 embedding_size = max_n 
