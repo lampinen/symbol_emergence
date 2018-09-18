@@ -12,6 +12,7 @@ init_eta = 0.0005
 nepochs = 500000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
+result_dir = "/mnt/fs2/lampinen/recurrent_integers_results/"
 
 RNN_seq_length = 4
 embedding_size = max_n 
@@ -20,7 +21,8 @@ nhidden_recurrent = embedding_size
 
 grad_clip_norm = 5.
 
-num_runs = 200
+num_runs = 10
+run_offset = 0
 #rseed = 2  #reproducibility
 ###################################
 identity = numpy.zeros(max_n)
@@ -149,9 +151,9 @@ def get_train_op(loss, optimizer):
     return train
 
 
-for rseed in xrange(num_runs):
+for rseed in xrange(run_offset, run_offset+num_runs):
     print "run %i" %rseed
-    filename_prefix = "results/integers/maxn_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_" %(max_n,RNN_seq_length,nhidden_shared,nhidden_recurrent,embedding_size,rseed)
+    filename_prefix = results_dir + "maxn_%i_seq_length-%i_nhidden-shared_%i-recurrent_%i-embedding_%i_rseed_%i_" %(max_n,RNN_seq_length,nhidden_shared,nhidden_recurrent,embedding_size,rseed)
 #    if os.path.exists(filename_prefix+"final_a_reps.csv"):
 #	print "skipping %i" %rseed
 #	continue
