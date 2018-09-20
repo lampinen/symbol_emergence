@@ -15,7 +15,7 @@ library(tsne)
 ```
 
 ```{r}
-group_order = 7
+group_order = 14
 nhidden_shared =  group_order#*group_order
 nhidden_separate = group_order
 nruns = 200
@@ -92,7 +92,7 @@ rep_simils = reps %>%
 
 ```{r}
 set.seed(1)
-nclusters =3
+nclusters =7
 cluster_fit = kmeans(rep_simils %>% select(-run),nclusters)
 cluster_fit
 
@@ -128,11 +128,11 @@ for (cl in 1:nclusters) {
   #  ggtitle(sprintf('cluster %i PCs 23',cl)))
   #ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs23.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
   
-  #print(ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
-  #  geom_point(size=5) +
-  #  theme_bw() +
-  #  ggtitle(sprintf('cluster %i PCs 34',cl)))
-  #ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs34.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
+  print(ggplot(PCed_reps,aes(x=PC3,y=PC4,color=element)) +
+    geom_point(size=5) +
+    theme_bw() +
+    ggtitle(sprintf('cluster %i PCs 34',cl)))
+  ggsave(sprintf('results/cyclic_plots/order_%i_nhidden-shared_%i-separate_%i_numrunsused_%i_nclusters_%i_cluster_%i_PCs34.png',group_order,nhidden_shared,nhidden_separate,num_runs_used,nclusters,cl))
 }
 ```
 
