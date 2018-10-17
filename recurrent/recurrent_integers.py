@@ -12,7 +12,7 @@ init_eta = 0.0005
 nepochs = 500000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
-results_dir = "/mnt/fs2/lampinen/recurrent_integers_results/"
+results_dir = "/mnt/fs2/lampinen/recurrent_integers_remapping_results/"
 
 RNN_seq_length = 4
 embedding_size = max_n 
@@ -119,6 +119,7 @@ for task_name in task_names:
 
 def build_operation_subnetwork(embedded_inputs, target_ph, mask_ph, task_name): 
     with tf.variable_scope(task_name):
+        Wremap = Wremaps[task_name] 
         Wr2h = tf.Variable(tf.random_normal([nhidden_recurrent,nhidden_shared],0.,1/numpy.sqrt(nhidden_recurrent)))
         We2h =  tf.Variable(tf.random_normal([embedding_size,nhidden_shared],0.,1/numpy.sqrt(embedding_size)))   
         bh = tf.Variable(tf.zeros([nhidden_shared,]))
@@ -126,11 +127,14 @@ def build_operation_subnetwork(embedded_inputs, target_ph, mask_ph, task_name):
         br = tf.Variable(tf.zeros([nhidden_recurrent,]))
 
         output_logits = []
-        recurrent_state = tf.squeeze(tf.slice(embedded_inputs,[0,0,0],[-1,1,-1]),axis=1)
+        this_embedded_input = tf.squeeze(tf.slice(embedded_inputs,[0,0,0],[-1,1,-1]),axis=1)
+        this_remapped_input = tf.matmul(this_embedded_input, Wremap)
+        recurrent_state = this_remapped_input 
         output_logits.append(tf.matmul(recurrent_state,tf.transpose(embeddings)))
 
         for i in range(1,RNN_seq_length):
             this_embedded_input = tf.squeeze(tf.slice(embedded_inputs,[0,i,0,],[-1,1,-1]),axis=1)
+            this_remapped_input = tf.matmul(this_embedded_input, Wremap)
             hidden_state = tf.nn.relu(tf.matmul(recurrent_state,Wr2h)+tf.matmul(this_embedded_input,We2h)+bh)
             recurrent_state = tf.nn.tanh(tf.matmul(hidden_state,Wh2r)+br) 
             output_logits.append(tf.matmul(recurrent_state,tf.transpose(embeddings)))
@@ -171,7 +175,11 @@ for rseed in xrange(run_offset, run_offset+num_runs):
     embedded_inputs = tf.nn.embedding_lookup(embeddings,input_ph)
     
     # Create networks.
+    Wremaps = {}
+    task_embedding_objs = {}
     for task_name in task_names:
+        Wremaps[task_name] = tf.Variable(tf.random_normal([nhidden_shared,nhidden_shared],0.,1/numpy.sqrt(nhidden_recurrent)))
+        task_embedding_objs[task_name] = tf.matmul(embeddings, Wremaps[task_name])
         output, loss, max_deviation = build_operation_subnetwork(embedded_inputs, target_ph, mask_ph, task_name=task_name) 
         task_mappings[task_name].update({"output": output, "loss": loss, "max_deviation": max_deviation})
     
@@ -238,3 +246,5 @@ for rseed in xrange(run_offset, run_offset+num_runs):
 
     if max(losses) < 0.05 and max(max_devs) < 0.2:
         save_weights(embeddings, filename_prefix+"final_reps.csv")
+        for task_name in task_names:
+            save_weights(task_embedding_objs[task_name], filename_prefix+"final_" + task_name + "_remapped_reps.csv")
