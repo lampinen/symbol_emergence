@@ -12,7 +12,7 @@ init_eta = 0.0005
 nepochs = 500000
 early_termination_loss = 0.001
 early_termination_max_dev = 0.2
-results_dir = "/mnt/fs2/lampinen/recurrent_integers_remapping_results/"
+results_dir = "/mnt/fs2/lampinen/recurrent_integers_nonlinear_remapping_results/"
 
 RNN_seq_length = 4
 embedding_size = max_n 
@@ -128,7 +128,7 @@ def build_operation_subnetwork(embedded_inputs, target_ph, mask_ph, task_name):
 
         output_logits = []
         this_embedded_input = tf.squeeze(tf.slice(embedded_inputs,[0,0,0],[-1,1,-1]),axis=1)
-        this_remapped_input = tf.matmul(this_embedded_input, Wremap)
+        this_remapped_input = tf.nn.relu(tf.matmul(this_embedded_input, Wremap))
         recurrent_state = this_remapped_input 
         output_logits.append(tf.matmul(recurrent_state,tf.transpose(embeddings)))
 
